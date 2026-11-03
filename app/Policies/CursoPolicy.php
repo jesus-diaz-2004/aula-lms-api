@@ -12,6 +12,11 @@ use App\Models\Usuario;
  */
 class CursoPolicy
 {
+    public function viewAny(Usuario $actor): bool
+    {
+        return $actor->rol === Rol::Administrador;
+    }
+
     public function create(Usuario $actor): bool
     {
         return $actor->rol === Rol::Administrador;

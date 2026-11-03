@@ -24,6 +24,12 @@ class CursoResource extends JsonResource
             // * El nombre y la clave del curso son los de su materia.
             'nombre' => $this->materia->nombre,
             'clave' => $this->materia->clave,
+            // Solo sale si se cargó el grupo en la consulta.
+            'grupo' => new GrupoResource($this->whenLoaded('grupo')),
+            // Solo sale si se cargó en la consulta. Es null si el curso no tiene docente.
+            'docente' => $this->whenLoaded('docente', function ($docente) {
+                return new DocenteResumenResource($docente);
+            }),
         ];
     }
 }
