@@ -21,8 +21,8 @@ class CursoController extends Controller
      * Listar cursos
      *
      * Paginada de 15 en 15 y ordenada por el nombre de la materia. Cada curso
-     * trae su grupo y su docente; docente en null significa que no tiene.
-     * Acepta en la URL: buscar (parte del nombre o la clave de la materia),
+     * trae su grupo, con sus alumnos activos, y su docente; docente en null
+     * significa que no tiene. Acepta en la URL: buscar (parte del nombre o la clave de la materia),
      * grupo_id, semestre_id y docente_id. Se pueden combinar.
      */
     // * La paginación no la detecta sola la documentación, por eso se declara "page".
@@ -33,7 +33,17 @@ class CursoController extends Controller
         $consulta = Curso::query()
             ->join('materias', 'materias.id', '=', 'cursos.materia_id')
             ->select('cursos.*')
-            ->with(['materia', 'grupo.semestre', 'docente']);
+            ->with([
+                'materia',
+                'docente',
+                // * Los alumnos del curso son los activos de su grupo; los dados de baja no cuentan.
+                'grupo' => function ($grupos) {
+                    $grupos->with('semestre')
+                        ->withCount(['grupoAlumnos as alumnos_activos_count' => function ($filas) {
+                            $filas->activos();
+                        }]);
+                },
+            ]);
 
         if ($request->filled('buscar')) {
             $texto = '%'.$request->buscar.'%';
