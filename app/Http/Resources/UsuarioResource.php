@@ -22,6 +22,8 @@ class UsuarioResource extends JsonResource
             'correo' => $this->correo,
             'rol' => $this->rol->value,
             'activo' => $this->activo,
+            // Cursos que da como docente. Solo sale al filtrar por rol=docente.
+            'total_cursos' => $this->whenCounted('cursosImpartidos'),
         ];
     }
 }
