@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\Rol;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Usuarios\ActualizarUsuarioRequest;
 use App\Http\Requests\Usuarios\CambiarEstadoUsuarioRequest;
@@ -28,7 +29,7 @@ class UsuarioController extends Controller
      * Paginada de 15 en 15 y ordenada por nombre. Acepta en la URL: buscar
      * (parte del número de cuenta o del nombre), rol y estado (activo o
      * inactivo). Los filtros se pueden combinar y se conservan en los
-     * enlaces de página.
+     * enlaces de página. Con rol=docente, cada usuario trae total_cursos.
      */
     // * La paginación no la detecta sola la documentación, por eso se declara "page".
     #[QueryParameter('page', 'Número de página.', type: 'int', default: 1)]
@@ -47,6 +48,11 @@ class UsuarioController extends Controller
 
         if ($request->filled('rol')) {
             $consulta->where('rol', $request->rol);
+        }
+
+        // * Al buscar docentes para un curso, el administrador ve cuántos cursos tiene ya cada uno.
+        if ($request->rol === Rol::Docente->value) {
+            $consulta->withCount('cursosImpartidos');
         }
 
         if ($request->filled('estado')) {
