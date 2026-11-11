@@ -2,11 +2,10 @@
 
 namespace App\Http\Requests\Cursos;
 
-use App\Enums\Rol;
 use App\Models\Curso;
 use App\Models\Grupo;
 use App\Models\Materia;
-use App\Models\Usuario;
+use App\Rules\DocenteActivo;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
@@ -29,8 +28,8 @@ class RegistrarCursoRequest extends FormRequest
             'materia_id' => ['bail', 'required', 'integer', 'exists:materias,id'],
             // Id del grupo que va a cursar la materia.
             'grupo_id' => ['bail', 'required', 'integer', 'exists:grupos,id'],
-            // Id del docente. Es opcional al crear.
-            'docente_id' => ['bail', 'nullable', 'integer', 'exists:usuarios,id'],
+            // Id del docente. Es opcional al crear; si se manda, debe ser un docente activo.
+            'docente_id' => ['bail', 'nullable', 'integer', 'exists:usuarios,id', new DocenteActivo],
         ];
     }
 
@@ -57,16 +56,6 @@ class RegistrarCursoRequest extends FormRequest
                 // * Un grupo solo cursa materias de su propio semestre.
                 if ($materia->semestre_id !== $grupo->semestre_id) {
                     $validator->errors()->add('materia_id', 'La materia no pertenece al semestre del grupo.');
-                }
-
-                if ($this->filled('docente_id')) {
-                    $docente = Usuario::find($this->docente_id);
-
-                    if ($docente->rol !== Rol::Docente) {
-                        $validator->errors()->add('docente_id', 'El usuario no tiene rol de docente.');
-                    } elseif (! $docente->activo) {
-                        $validator->errors()->add('docente_id', 'El docente no está activo.');
-                    }
                 }
 
                 $yaExiste = Curso::where('materia_id', $this->materia_id)
