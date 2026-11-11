@@ -43,4 +43,5 @@ Route::middleware('auth:sanctum')->group(function () {
     // * Cursos: los permisos los decide CursoPolicy.
     Route::get('/cursos', [CursoController::class, 'index']);
     Route::post('/cursos', [CursoController::class, 'store']);
+    Route::patch('/cursos/{curso}/docente', [CursoController::class, 'cambiarDocente']);
 });

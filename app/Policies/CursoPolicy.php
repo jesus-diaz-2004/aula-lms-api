@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Enums\Rol;
+use App\Models\Curso;
 use App\Models\Usuario;
 
 /**
@@ -18,6 +19,11 @@ class CursoPolicy
     }
 
     public function create(Usuario $actor): bool
+    {
+        return $actor->rol === Rol::Administrador;
+    }
+
+    public function cambiarDocente(Usuario $actor, Curso $curso): bool
     {
         return $actor->rol === Rol::Administrador;
     }

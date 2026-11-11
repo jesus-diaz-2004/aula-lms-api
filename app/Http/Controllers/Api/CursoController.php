@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Cursos\CambiarDocenteCursoRequest;
 use App\Http\Requests\Cursos\ConsultarCursosRequest;
 use App\Http\Requests\Cursos\RegistrarCursoRequest;
 use App\Http\Resources\CursoResource;
@@ -96,5 +97,25 @@ class CursoController extends Controller
             'message' => 'Curso registrado.',
             'curso' => new CursoResource($curso),
         ], 201);
+    }
+
+    /**
+     * Asignar o cambiar el docente de un curso
+     *
+     * Sirve igual para un curso sin docente que para uno que ya tiene. El curso
+     * solo guarda un docente, así que el anterior deja de serlo; el contenido y
+     * las calificaciones son del curso y se quedan.
+     */
+    public function cambiarDocente(CambiarDocenteCursoRequest $request, Curso $curso): JsonResponse
+    {
+        $curso->update(['docente_id' => $request->docente_id]);
+
+        // Se carga el nuevo docente para devolverlo en la respuesta.
+        $curso->load('docente');
+
+        return response()->json([
+            'message' => 'Docente del curso actualizado.',
+            'curso' => new CursoResource($curso),
+        ]);
     }
 }
