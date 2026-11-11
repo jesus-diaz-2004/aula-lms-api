@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Cursos;
 
+use App\Rules\DocenteActivo;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -19,8 +20,8 @@ class CambiarDocenteCursoRequest extends FormRequest
     {
         // bail: si no es un número, no se busca en la base de datos.
         return [
-            // Id del nuevo docente del curso.
-            'docente_id' => ['bail', 'required', 'integer', 'exists:usuarios,id'],
+            // Id del nuevo docente del curso. Debe ser un docente activo.
+            'docente_id' => ['bail', 'required', 'integer', 'exists:usuarios,id', new DocenteActivo],
         ];
     }
 
