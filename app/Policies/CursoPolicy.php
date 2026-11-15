@@ -40,6 +40,15 @@ class CursoPolicy
     }
 
     /**
+     * "Mis cursos" es para docentes y alumnos. El administrador usa la lista
+     * de todos los cursos.
+     */
+    public function verMisCursos(Usuario $actor): bool
+    {
+        return $actor->rol === Rol::Docente || $actor->rol === Rol::Alumno;
+    }
+
+    /**
      * Quién puede ver la lista de alumnos de un curso. El alumno no.
      */
     public function verAlumnos(Usuario $actor, Curso $curso): bool

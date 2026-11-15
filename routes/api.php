@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\GrupoController;
 use App\Http\Controllers\Api\ImportacionAlumnosGrupoController;
 use App\Http\Controllers\Api\ImportacionUsuariosController;
 use App\Http\Controllers\Api\MateriaController;
+use App\Http\Controllers\Api\MisCursosController;
 use App\Http\Controllers\Api\SemestreController;
 use App\Http\Controllers\Api\UsuarioController;
 use Illuminate\Support\Facades\Route;
@@ -50,4 +51,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cursos/{curso}', [CursoController::class, 'show']);
     Route::get('/cursos/{curso}/alumnos', [CursoAlumnoController::class, 'index']);
     Route::patch('/cursos/{curso}/docente', [CursoController::class, 'cambiarDocente']);
+    Route::get('/mis-cursos', [MisCursosController::class, 'index']);
 });
