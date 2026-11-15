@@ -12,6 +12,7 @@ use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\QueryParameter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Gate;
 
 #[Group('Cursos', weight: 5)]
 class CursoController extends Controller
@@ -97,6 +98,22 @@ class CursoController extends Controller
             'message' => 'Curso registrado.',
             'curso' => new CursoResource($curso),
         ], 201);
+    }
+
+    /**
+     * Ver el detalle de un curso
+     *
+     * Trae la materia (nombre y clave), el grupo con su semestre y el docente;
+     * docente en null significa que no tiene. Lo pueden ver el administrador,
+     * el docente asignado y los alumnos activos del grupo del curso.
+     */
+    public function show(Curso $curso): CursoResource
+    {
+        Gate::authorize('view', $curso);
+
+        $curso->load(['materia', 'docente', 'grupo.semestre']);
+
+        return new CursoResource($curso);
     }
 
     /**
