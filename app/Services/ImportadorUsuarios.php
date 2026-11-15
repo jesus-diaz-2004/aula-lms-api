@@ -10,7 +10,7 @@ use Illuminate\Validation\Rule;
 use RuntimeException;
 
 /**
- * Crea usuarios a partir de un archivo CSV.
+ * Crea docentes y administradores a partir de un archivo CSV.
  *
  * Si una fila tiene un error, sigue con las demás. Si el número de cuenta ya
  * existe, salta la fila, así que subir el mismo archivo dos veces no duplica.
@@ -18,6 +18,8 @@ use RuntimeException;
 class ImportadorUsuarios
 {
     public const ENCABEZADOS = ['numero_cuenta', 'nombre', 'rol', 'nip', 'correo'];
+
+    private const MENSAJE_ROL = 'El rol debe ser docente o administrador. Los alumnos se importan desde su grupo.';
 
     private array $reporte;
 
@@ -84,6 +86,13 @@ class ImportadorUsuarios
 
         $datos = array_combine(self::ENCABEZADOS, array_map('trim', $fila));
 
+        // * Se revisa antes que la cuenta existente para que un alumno nunca pase sin aviso.
+        if ($datos['rol'] === Rol::Alumno->value) {
+            $this->reporte['errores'][] = "Línea {$linea}: ".self::MENSAJE_ROL;
+
+            return;
+        }
+
         // Si la cuenta ya existe, se salta la fila.
         if (Usuario::where('numero_cuenta', $datos['numero_cuenta'])->exists()) {
             $this->reporte['omitidos']++;
@@ -94,13 +103,14 @@ class ImportadorUsuarios
         $validador = Validator::make($datos, [
             'numero_cuenta' => ['required', 'string', 'max:20'],
             'nombre' => ['required', 'string', 'max:100'],
-            'rol' => ['required', Rule::enum(Rol::class)],
+            // * Los alumnos ya no entran por aquí: se importan desde su grupo para quedar asignados.
+            'rol' => ['required', Rule::in([Rol::Docente->value, Rol::Administrador->value])],
             'nip' => ['required', new Nip],
             'correo' => ['nullable', 'email', 'max:150'],
         ], [
             'required' => 'Falta el campo :attribute.',
             'max' => 'El campo :attribute supera :max caracteres.',
-            'rol.enum' => 'El rol debe ser alumno, docente o administrador.',
+            'rol.in' => self::MENSAJE_ROL,
             'correo.email' => 'El correo no es válido.',
         ]);
 

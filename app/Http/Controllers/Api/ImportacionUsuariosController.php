@@ -22,7 +22,9 @@ class ImportacionUsuariosController extends Controller
      * El archivo se procesa en segundo plano porque, si es grande, puede
      * tardar varios minutos. Responde de inmediato (202) con un id; el
      * resultado se consulta con GET /api/usuarios/importaciones/{id}.
-     * Encabezado del CSV: numero_cuenta,nombre,rol,nip,correo.
+     * Encabezado del CSV: numero_cuenta,nombre,rol,nip,correo. El rol solo
+     * puede ser docente o administrador: los alumnos se importan desde su
+     * grupo (POST /api/grupos/{grupo}/alumnos/importaciones).
      */
     // * Si cambia ImportadorUsuarios::ENCABEZADOS, actualiza la descripción.
     public function store(ImportarUsuariosRequest $request): JsonResponse
@@ -55,7 +57,7 @@ class ImportacionUsuariosController extends Controller
     // * El contenido depende del estado, por eso se muestra un ejemplo de cada uno.
     #[Response(200, 'Estado de la importación', examples: [
         ['id' => '9b1c4f3e-2a7d-4c1e-8f0a-1d2e3f4a5b6c', 'estado' => 'en_proceso'],
-        ['id' => '9b1c4f3e-2a7d-4c1e-8f0a-1d2e3f4a5b6c', 'estado' => 'terminada', 'creados' => 42, 'omitidos' => 3, 'errores' => ['Línea 7: El rol debe ser alumno, docente o administrador.']],
+        ['id' => '9b1c4f3e-2a7d-4c1e-8f0a-1d2e3f4a5b6c', 'estado' => 'terminada', 'creados' => 42, 'omitidos' => 3, 'errores' => ['Línea 7: El rol debe ser docente o administrador. Los alumnos se importan desde su grupo.']],
         ['id' => '9b1c4f3e-2a7d-4c1e-8f0a-1d2e3f4a5b6c', 'estado' => 'fallida', 'mensaje' => 'No se pudo procesar el archivo. Intenta subirlo de nuevo.'],
     ])]
     public function show(string $id): JsonResponse
