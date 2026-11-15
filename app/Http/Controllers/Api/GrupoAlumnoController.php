@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\EstadoGrupoAlumno;
-use App\Enums\Rol;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Grupos\AgregarAlumnosRequest;
 use App\Http\Requests\Grupos\CambiarEstadoAlumnoRequest;
@@ -83,7 +82,7 @@ class GrupoAlumnoController extends Controller
             $alumnoId = (int) $idRecibido;
             $usuario = Usuario::find($alumnoId);
 
-            $motivo = $this->motivoParaNoActivar($usuario, $grupo);
+            $motivo = $grupo->motivoParaNoActivar($usuario);
 
             if ($motivo !== null) {
                 $omitidos[] = ['alumno_id' => $alumnoId, 'motivo' => $motivo];
@@ -147,7 +146,7 @@ class GrupoAlumnoController extends Controller
             $mensaje = 'Alumno dado de baja.';
         } else {
             if ($fila->estado === EstadoGrupoAlumno::Baja) {
-                $motivo = $this->motivoParaNoActivar($alumno, $grupo);
+                $motivo = $grupo->motivoParaNoActivar($alumno);
 
                 if ($motivo !== null) {
                     throw ValidationException::withMessages(['estado' => [$motivo]]);
@@ -166,32 +165,5 @@ class GrupoAlumnoController extends Controller
             'message' => $mensaje,
             'alumno' => new GrupoAlumnoResource($fila),
         ]);
-    }
-
-    /**
-     * Dice por qué un usuario no puede quedar activo en el grupo, o null si sí puede.
-     * Agregar y reingresar usan las mismas reglas.
-     */
-    private function motivoParaNoActivar(Usuario $usuario, Grupo $grupo): ?string
-    {
-        if ($usuario->rol !== Rol::Alumno) {
-            return 'No tiene rol de alumno.';
-        }
-
-        if (! $usuario->activo) {
-            return 'Su cuenta no está activa.';
-        }
-
-        // * Un alumno solo puede estar activo en un grupo a la vez.
-        $filaEnOtroGrupo = GrupoAlumno::activos()
-            ->where('alumno_id', $usuario->id)
-            ->where('grupo_id', '!=', $grupo->id)
-            ->first();
-
-        if ($filaEnOtroGrupo !== null) {
-            return 'Ya está activo en el grupo '.$filaEnOtroGrupo->grupo->nombre.'.';
-        }
-
-        return null;
     }
 }

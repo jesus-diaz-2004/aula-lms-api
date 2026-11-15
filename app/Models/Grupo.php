@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Rol;
 use App\Enums\Turno;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
@@ -50,5 +51,33 @@ class Grupo extends Model
     public function cursos(): HasMany
     {
         return $this->hasMany(Curso::class);
+    }
+
+    /**
+     * Dice por qué un usuario no puede quedar activo en este grupo, o null si sí puede.
+     *
+     * Agregar a mano, reingresar e importar desde CSV usan estas mismas reglas.
+     */
+    public function motivoParaNoActivar(Usuario $usuario): ?string
+    {
+        if ($usuario->rol !== Rol::Alumno) {
+            return 'No tiene rol de alumno.';
+        }
+
+        if (! $usuario->activo) {
+            return 'Su cuenta no está activa.';
+        }
+
+        // * Un alumno solo puede estar activo en un grupo a la vez.
+        $filaEnOtroGrupo = GrupoAlumno::activos()
+            ->where('alumno_id', $usuario->id)
+            ->where('grupo_id', '!=', $this->id)
+            ->first();
+
+        if ($filaEnOtroGrupo !== null) {
+            return 'Ya está activo en el grupo '.$filaEnOtroGrupo->grupo->nombre.'.';
+        }
+
+        return null;
     }
 }
