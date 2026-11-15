@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CursoAlumnoController;
 use App\Http\Controllers\Api\CursoController;
 use App\Http\Controllers\Api\GrupoAlumnoController;
 use App\Http\Controllers\Api\GrupoController;
@@ -47,5 +48,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cursos', [CursoController::class, 'index']);
     Route::post('/cursos', [CursoController::class, 'store']);
     Route::get('/cursos/{curso}', [CursoController::class, 'show']);
+    Route::get('/cursos/{curso}/alumnos', [CursoAlumnoController::class, 'index']);
     Route::patch('/cursos/{curso}/docente', [CursoController::class, 'cambiarDocente']);
 });
