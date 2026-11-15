@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CursoController;
 use App\Http\Controllers\Api\GrupoAlumnoController;
 use App\Http\Controllers\Api\GrupoController;
+use App\Http\Controllers\Api\ImportacionAlumnosGrupoController;
 use App\Http\Controllers\Api\ImportacionUsuariosController;
 use App\Http\Controllers\Api\MateriaController;
 use App\Http\Controllers\Api\SemestreController;
@@ -39,6 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/grupos/{grupo}/alumnos', [GrupoAlumnoController::class, 'index']);
     Route::post('/grupos/{grupo}/alumnos', [GrupoAlumnoController::class, 'store']);
     Route::patch('/grupos/{grupo}/alumnos/{alumno}', [GrupoAlumnoController::class, 'cambiarEstado']);
+    Route::post('/grupos/{grupo}/alumnos/importaciones', [ImportacionAlumnosGrupoController::class, 'store']);
 
     // * Cursos: los permisos los decide CursoPolicy.
     Route::get('/cursos', [CursoController::class, 'index']);
