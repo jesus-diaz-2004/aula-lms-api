@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/grupos/{grupo}/alumnos', [GrupoAlumnoController::class, 'store']);
     Route::patch('/grupos/{grupo}/alumnos/{alumno}', [GrupoAlumnoController::class, 'cambiarEstado']);
     Route::post('/grupos/{grupo}/alumnos/importaciones', [ImportacionAlumnosGrupoController::class, 'store']);
+    Route::get('/grupos/{grupo}/alumnos/importaciones/{id}', [ImportacionAlumnosGrupoController::class, 'show']);
 
     // * Cursos: los permisos los decide CursoPolicy.
     Route::get('/cursos', [CursoController::class, 'index']);

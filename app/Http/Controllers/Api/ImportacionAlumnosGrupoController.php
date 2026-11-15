@@ -7,8 +7,10 @@ use App\Http\Requests\Grupos\ImportarAlumnosGrupoRequest;
 use App\Jobs\ProcesarImportacionAlumnosGrupo;
 use App\Models\Grupo;
 use Dedoc\Scramble\Attributes\Group;
+use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 
 #[Group('Grupos', weight: 4)]
@@ -38,5 +40,42 @@ class ImportacionAlumnosGrupoController extends Controller
             'id' => $id,
             'estado' => 'en_proceso',
         ], 202);
+    }
+
+    /**
+     * Consultar una importación de alumnos del grupo
+     *
+     * Devuelve el estado (en_proceso, terminada o fallida). Mientras sea
+     * en_proceso, vuelve a consultar cada pocos segundos. Si terminó trae
+     * archivo_rechazado (true si alguna fila era de otro grupo y no se importó
+     * nada), creados (cuentas nuevas), asignados (alumnos que ya existían),
+     * omitidos (los que ya estaban en el grupo, con su línea) y errores (por
+     * línea); si falló trae un mensaje. El resultado se guarda 24 horas;
+     * después responde 404. Solo se encuentra desde el grupo al que se subió.
+     *
+     * @param  string  $id  El id que devolvió la subida.
+     */
+    // * El contenido depende del estado, por eso se muestra un ejemplo de cada uno.
+    #[Response(200, 'Estado de la importación', examples: [
+        ['id' => '9b1c4f3e-2a7d-4c1e-8f0a-1d2e3f4a5b6c', 'estado' => 'en_proceso'],
+        ['id' => '9b1c4f3e-2a7d-4c1e-8f0a-1d2e3f4a5b6c', 'estado' => 'terminada', 'archivo_rechazado' => false, 'creados' => 30, 'asignados' => 5, 'omitidos' => [['linea' => 4, 'motivo' => 'Ya está en este grupo.']], 'errores' => ['Línea 9: Ya está activo en el grupo 3-1.']],
+        ['id' => '9b1c4f3e-2a7d-4c1e-8f0a-1d2e3f4a5b6c', 'estado' => 'terminada', 'archivo_rechazado' => true, 'creados' => 0, 'asignados' => 0, 'omitidos' => [], 'errores' => ['Línea 3: el grupo 1-2 no coincide con el grupo 1-1.']],
+        ['id' => '9b1c4f3e-2a7d-4c1e-8f0a-1d2e3f4a5b6c', 'estado' => 'fallida', 'mensaje' => 'No se pudo procesar el archivo. Intenta subirlo de nuevo.'],
+    ])]
+    public function show(Grupo $grupo, string $id): JsonResponse
+    {
+        // * No tiene Form Request, por eso el permiso se revisa aquí.
+        Gate::authorize('gestionarAlumnos', $grupo);
+
+        $importacion = Cache::get(ProcesarImportacionAlumnosGrupo::claveCache($grupo->id, $id));
+
+        // El reporte solo se guarda 24 horas.
+        if ($importacion === null) {
+            return response()->json([
+                'message' => 'La importación no existe o ya expiró.',
+            ], 404);
+        }
+
+        return response()->json(['id' => $id, ...$importacion]);
     }
 }
