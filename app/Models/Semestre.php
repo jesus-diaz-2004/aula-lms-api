@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Un semestre del plan de estudios (del 1 al 8).
+ * Un semestre del plan de estudios (del 1 al 10).
  */
 #[Fillable(['numero', 'nombre'])]
 class Semestre extends Model

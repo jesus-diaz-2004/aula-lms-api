@@ -8,7 +8,7 @@ use Illuminate\Database\Seeder;
 class SemestreSeeder extends Seeder
 {
     /**
-     * Los 8 semestres del plan de estudios.
+     * Los 10 semestres del plan de estudios.
      *
      * ! No son datos de prueba: la aplicación los necesita en todos los entornos.
      */
@@ -23,6 +23,8 @@ class SemestreSeeder extends Seeder
             6 => 'Semestre VI',
             7 => 'Semestre VII',
             8 => 'Semestre VIII',
+            9 => 'Semestre IX',
+            10 => 'Semestre X',
         ];
 
         // Busca por número para poder correrlo varias veces sin duplicar.
