@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Enums\Rol;
 use App\Enums\Turno;
+use App\Observers\NombreEnMisCursosObserver;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Un grupo (salón) que cursa un semestre.
  */
+#[ObservedBy(NombreEnMisCursosObserver::class)]
 #[Fillable(['semestre_id', 'nombre', 'turno'])]
 class Grupo extends Model
 {

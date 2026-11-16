@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Enums\EstadoGrupoAlumno;
+use App\Observers\GrupoAlumnoObserver;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * La pertenencia de un alumno a un grupo, activa o dada de baja.
  */
+#[ObservedBy(GrupoAlumnoObserver::class)]
 #[Fillable(['grupo_id', 'alumno_id', 'estado', 'baja_en'])]
 class GrupoAlumno extends Model
 {

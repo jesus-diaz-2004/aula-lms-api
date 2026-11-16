@@ -7,10 +7,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Cursos\ConsultarMisCursosRequest;
 use App\Http\Resources\MisCursosGrupoResource;
 use App\Models\Curso;
+use App\Models\Grupo;
 use App\Models\GrupoAlumno;
+use App\Models\Usuario;
+use App\Services\MisCursosCache;
 use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 #[Group('Cursos', weight: 5)]
 class MisCursosController extends Controller
@@ -29,6 +33,34 @@ class MisCursosController extends Controller
     {
         $usuario = $request->user();
 
+        // * Se guarda en Redis; MisCursosCache la borra cuando algo cambia.
+        $grupos = Cache::remember(MisCursosCache::clave($usuario->id), now()->addHour(), function () use ($usuario) {
+            return $this->buscarGrupos($usuario);
+        });
+
+        // El filtro se aplica sobre la lista guardada, así hay una sola caché por persona.
+        if ($usuario->rol === Rol::Docente && $request->filled('grupo_id')) {
+            $filtrados = [];
+
+            foreach ($grupos as $grupo) {
+                if ($grupo->id === (int) $request->grupo_id) {
+                    $filtrados[] = $grupo;
+                }
+            }
+
+            $grupos = $filtrados;
+        }
+
+        return MisCursosGrupoResource::collection($grupos);
+    }
+
+    /**
+     * Busca en la base de datos los grupos del usuario, cada uno con sus cursos.
+     *
+     * @return array<int, Grupo>
+     */
+    private function buscarGrupos(Usuario $usuario): array
+    {
         // El join permite ordenar por el grupo y por la materia.
         $consulta = Curso::query()
             ->join('grupos', 'grupos.id', '=', 'cursos.grupo_id')
@@ -38,10 +70,6 @@ class MisCursosController extends Controller
 
         if ($usuario->rol === Rol::Docente) {
             $consulta->where('cursos.docente_id', $usuario->id);
-
-            if ($request->filled('grupo_id')) {
-                $consulta->where('cursos.grupo_id', $request->grupo_id);
-            }
         } else {
             // ! Solo el grupo donde está activo; si lo dieron de baja, no ve nada.
             $grupoId = GrupoAlumno::activos()
@@ -49,7 +77,7 @@ class MisCursosController extends Controller
                 ->value('grupo_id');
 
             if ($grupoId === null) {
-                return MisCursosGrupoResource::collection([]);
+                return [];
             }
 
             $consulta->where('cursos.grupo_id', $grupoId);
@@ -85,6 +113,6 @@ class MisCursosController extends Controller
             $grupo->setRelation('cursos', new Collection($cursosPorGrupo[$grupoId]));
         }
 
-        return MisCursosGrupoResource::collection(array_values($grupos));
+        return array_values($grupos);
     }
 }

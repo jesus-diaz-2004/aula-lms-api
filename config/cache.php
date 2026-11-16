@@ -1,5 +1,11 @@
 <?php
 
+use App\Models\Curso;
+use App\Models\Grupo;
+use App\Models\Materia;
+use App\Models\Semestre;
+use App\Models\Usuario;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 
 return [
@@ -131,6 +137,15 @@ return [
     |
     */
 
-    'serializable_classes' => false,
+    // ! Solo las clases que guarda la caché de "Mis cursos" (HU-16). Si la
+    // tarjeta usa otro modelo, se agrega aquí; las demás siguen bloqueadas.
+    'serializable_classes' => [
+        Collection::class,
+        Curso::class,
+        Grupo::class,
+        Materia::class,
+        Semestre::class,
+        Usuario::class,
+    ],
 
 ];

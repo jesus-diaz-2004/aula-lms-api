@@ -3,14 +3,17 @@
 namespace App\Models;
 
 use App\Enums\Rol;
+use App\Observers\NombreEnMisCursosObserver;
 use Database\Factories\UsuarioFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
+#[ObservedBy(NombreEnMisCursosObserver::class)]
 #[Fillable(['numero_cuenta', 'nombre', 'correo', 'nip_hash', 'rol', 'telefono', 'foto_ruta', 'activo'])]
 #[Hidden(['nip_hash'])]
 class Usuario extends Authenticatable
