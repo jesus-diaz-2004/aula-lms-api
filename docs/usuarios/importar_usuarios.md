@@ -2,6 +2,10 @@
 
 Guía para el administrador y para el equipo web (pantalla de importación, HU-03a).
 
+Esta importación es para **docentes y administradores**. Los alumnos se
+importan desde la pantalla de su grupo para quedar asignados a él: ver
+[Importar los alumnos de un grupo](../grupos/importar_alumnos_grupo.md).
+
 ## Plantilla
 
 Descárgala desde la API:
@@ -29,7 +33,7 @@ Este texto se puede mostrar tal cual en la pantalla de importación.
 |---|---|---|
 | `numero_cuenta` | Sí | Hasta 20 caracteres. No se puede repetir. |
 | `nombre` | Sí | Nombre completo, hasta 100 caracteres. |
-| `rol` | Sí | `alumno`, `docente` o `administrador`. |
+| `rol` | Sí | `docente` o `administrador`. Una fila con `alumno` se reporta como error. |
 | `nip` | Sí | De 4 a 6 letras o números, sin espacios ni símbolos. |
 | `correo` | No | Correo válido. Puede ir vacío. |
 
@@ -37,8 +41,8 @@ Ejemplo:
 
 ```csv
 numero_cuenta,nombre,rol,nip,correo
-20990001,Ana López Hernández,alumno,AB12,a.lopez@info.uas.edu.mx
-20990002,José Luis Pérez Martínez,docente,XY99,
+20990001,Ana López Hernández,docente,AB12,a.lopez@info.uas.edu.mx
+20990002,José Luis Pérez Martínez,administrador,XY99,
 ```
 
 ## Endpoints para el equipo web
@@ -78,7 +82,7 @@ Terminada (`200`):
   "estado": "terminada",
   "creados": 1,
   "omitidos": 0,
-  "errores": ["Línea 3: El rol debe ser alumno, docente o administrador."]
+  "errores": ["Línea 3: El rol debe ser docente o administrador. Los alumnos se importan desde su grupo."]
 }
 ```
 
