@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\Rol;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\CursoResource;
+use App\Http\Requests\Cursos\ConsultarMisCursosRequest;
+use App\Http\Resources\MisCursosGrupoResource;
 use App\Models\Curso;
 use App\Models\GrupoAlumno;
 use Dedoc\Scramble\Attributes\Group;
-use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\Gate;
 
 #[Group('Cursos', weight: 5)]
 class MisCursosController extends Controller
@@ -18,15 +18,15 @@ class MisCursosController extends Controller
     /**
      * Ver mis cursos
      *
-     * El resultado depende de quién lo pide. El docente recibe los cursos que
-     * tiene asignados; el alumno, los cursos del grupo en el que está activo.
-     * Cada curso trae su materia, su grupo con el semestre y su docente.
-     * El administrador recibe 403: para él está la lista de todos los cursos.
+     * El resultado depende de quién lo pide y viene organizado por grupo: cada
+     * elemento trae el grupo (con su semestre) y sus cursos (con su materia y
+     * su docente). El docente recibe los cursos que tiene asignados y puede
+     * filtrarlos con grupo_id; el alumno, los cursos del grupo en el que está
+     * activo. El administrador recibe 403: para él está la lista de todos los
+     * cursos.
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(ConsultarMisCursosRequest $request): AnonymousResourceCollection
     {
-        Gate::authorize('verMisCursos', Curso::class);
-
         $usuario = $request->user();
 
         // El join permite ordenar por el grupo y por la materia.
@@ -38,6 +38,10 @@ class MisCursosController extends Controller
 
         if ($usuario->rol === Rol::Docente) {
             $consulta->where('cursos.docente_id', $usuario->id);
+
+            if ($request->filled('grupo_id')) {
+                $consulta->where('cursos.grupo_id', $request->grupo_id);
+            }
         } else {
             // ! Solo el grupo donde está activo; si lo dieron de baja, no ve nada.
             $grupoId = GrupoAlumno::activos()
@@ -45,17 +49,42 @@ class MisCursosController extends Controller
                 ->value('grupo_id');
 
             if ($grupoId === null) {
-                return CursoResource::collection([]);
+                return MisCursosGrupoResource::collection([]);
             }
 
             $consulta->where('cursos.grupo_id', $grupoId);
         }
 
+        // * Ordenar por grupo deja juntos los cursos de cada grupo.
         $cursos = $consulta->orderBy('grupos.nombre')
+            ->orderBy('cursos.grupo_id')
             ->orderBy('materias.nombre')
             ->orderBy('cursos.id')
             ->get();
 
-        return CursoResource::collection($cursos);
+        // Junta los cursos de cada grupo, en el mismo orden de la consulta.
+        $grupos = [];
+        $cursosPorGrupo = [];
+
+        foreach ($cursos as $curso) {
+            $grupo = $curso->grupo;
+
+            if (! isset($grupos[$grupo->id])) {
+                $grupos[$grupo->id] = $grupo;
+                $cursosPorGrupo[$grupo->id] = [];
+            }
+
+            // El grupo ya sale arriba; así no se repite dentro de cada curso.
+            $curso->unsetRelation('grupo');
+
+            $cursosPorGrupo[$grupo->id][] = $curso;
+        }
+
+        // ! Se cargan a mano solo los cursos de esta persona, no todos los del grupo.
+        foreach ($grupos as $grupoId => $grupo) {
+            $grupo->setRelation('cursos', new Collection($cursosPorGrupo[$grupoId]));
+        }
+
+        return MisCursosGrupoResource::collection(array_values($grupos));
     }
 }
